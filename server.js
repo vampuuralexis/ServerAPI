@@ -104,7 +104,71 @@ app.delete("/api/classes/:className/students/:index", (req, res) => {
   res.json({ message: "Student deleted" });
 });
 
+// Update class name
+app.put("/api/classes/:oldClassName", (req, res) => {
+  const { oldClassName } = req.params;
+  const { newClassName } = req.body;
+
+  if (!newClassName) return res.status(400).json({ message: "Missing newClassName" });
+
+  const data = loadData();
+
+  if (!data.classes[oldClassName]) {
+    return res.status(404).json({ message: "Class not found" });
+  }
+
+  if (data.classes[newClassName]) {
+    return res.status(409).json({ message: "New class name already exists" });
+  }
+
+  // Rename the class key
+  data.classes[newClassName] = data.classes[oldClassName];
+  delete data.classes[oldClassName];
+
+  saveData(data);
+
+  res.json({ message: "Class name updated" });
+});
+
+// Update student name
+app.put("/api/classes/:className/students/:index", (req, res) => {
+  const { className, index } = req.params;
+  const { newStudentName } = req.body;
+
+  if (!newStudentName) return res.status(400).json({ message: "Missing newStudentName" });
+
+  const data = loadData();
+
+  if (!data.classes[className]) {
+    return res.status(404).json({ message: "Class not found" });
+  }
+
+  const idx = parseInt(index);
+
+  if (idx < 0 || idx >= data.classes[className].length) {
+    return res.status(400).json({ message: "Invalid index" });
+  }
+
+  // Update the student name
+  data.classes[className][idx] = newStudentName;
+
+  saveData(data);
+
+  res.json({ message: "Student name updated" });
+});
+
+
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+window.addEventListener("DOMContentLoaded", () => {
+  const isLoggedIn = localStorage.getItem("is_logged_in") === "true";
+  if (isLoggedIn) {
+    goToStartseite(); // Load class management UI
+  } else {
+    showLoginPage(); // Show login/register form
+  }
+});
+
